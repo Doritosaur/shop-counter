@@ -39,8 +39,9 @@ function Amount({ label, cents }: { label: string; cents: number }) {
 function SnapshotLines({ lines }: { lines: readonly OrderLine[] }) {
   return (
     <ul className="my-3 space-y-1">
-      {lines.map((line) => (
-        <li key={line.sku}>
+      {/* By position: the API keeps a repeated sku as separate lines. */}
+      {lines.map((line, index) => (
+        <li key={index}>
           {line.name} × {line.qty}, {formatUsd(line.unitPriceCents * line.qty)}
         </li>
       ))}
