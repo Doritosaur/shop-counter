@@ -90,3 +90,16 @@ test("following a link to /shop resets the filters", async ({ page }) => {
   await expect(page.getByLabel("Search")).toHaveValue("");
   await expect(page.getByLabel("Sort")).toHaveValue("name");
 });
+
+test("repeat shop requests do not run getCatalog() again", async ({ request }) => {
+  const reads = async () => (await (await request.get("/api/debug/reads")).json()).catalogReads;
+  const pages = ["/shop", "/shop?q=lamp", "/shop?sort=price-desc", "/shop/lamp", "/shop/stool"];
+
+  for (const url of pages) expect((await request.get(url)).status()).toBe(200);
+  const warm = await reads();
+
+  for (const url of [...pages, "/shop?q=sto&sort=price-asc", "/shop?q=nothing"]) {
+    expect((await request.get(url)).status()).toBe(200);
+  }
+  expect(await reads()).toBe(warm);
+});

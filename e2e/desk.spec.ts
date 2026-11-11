@@ -25,6 +25,11 @@ test("preview, record, queue and fresh shop stock", async ({ page, request }) =>
   await expect(queue).toContainText("No payments recorded");
 
   const before = await remaining(request, "lamp");
+  // Fill the catalogue cache first, so the checks after recording prove it
+  // was invalidated rather than read cold.
+  for (const url of ["/shop", "/shop/lamp"]) {
+    expect(await (await request.get(url)).text()).toContain(`${before} left`);
+  }
   await fillPayment(page, { email: " Ada@Example.com ", item: "Maple lamp", charge: "ch_e2edesk01" });
 
   await page.getByRole("button", { name: "Preview" }).click();
