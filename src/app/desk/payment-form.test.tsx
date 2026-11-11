@@ -151,6 +151,41 @@ describe("PaymentForm", () => {
     expect(screen.queryByRole("region", { name: "Payment preview" })).not.toBeInTheDocument();
   });
 
+  it("drops a record error that arrives after the form was edited", async () => {
+    let finish!: (res: Response) => void;
+    fetchMock.mockReturnValueOnce(new Promise<Response>((resolve) => (finish = resolve)));
+    const user = await fill({ email: "ada@example.com", item: "Cedar stool", charge: "ch_12345678" });
+
+    await user.click(screen.getByRole("button", { name: "Record payment" }));
+    await user.selectOptions(screen.getByLabelText("Item"), "Maple lamp");
+    finish(new Response(JSON.stringify({ ok: false, errors: { sku: "Sold out" } }), { status: 409 }));
+
+    await vi.waitFor(() => expect(refresh).toHaveBeenCalled());
+    expect(screen.queryByText("Sold out")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Item")).not.toHaveAttribute("aria-invalid");
+  });
+
+  it("still shows a payment recorded after the form was edited", async () => {
+    let finish!: (res: Response) => void;
+    fetchMock.mockReturnValueOnce(new Promise<Response>((resolve) => (finish = resolve)));
+    const user = await fill({ email: "ada@example.com", item: "Maple lamp", charge: "ch_12345678" });
+
+    await user.click(screen.getByRole("button", { name: "Record payment" }));
+    await user.type(screen.getByLabelText("Email"), "x");
+    finish(
+      new Response(
+        JSON.stringify({
+          replayed: false,
+          payment: { email: "ada@example.com", sku: "lamp", itemName: "Maple lamp", extraCode: null, externalChargeId: "ch_12345678", totalCents: 8000 },
+        }),
+        { status: 201 },
+      ),
+    );
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Payment recorded");
+    expect(screen.getByLabelText("Email")).toHaveValue("ada@example.comx");
+  });
+
   it("sends one request when Record payment is clicked twice", async () => {
     let finish!: (res: Response) => void;
     fetchMock.mockReturnValueOnce(new Promise<Response>((resolve) => (finish = resolve)));

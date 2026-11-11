@@ -123,7 +123,8 @@ export function PaymentForm({ items }: { items: DeskItem[] }) {
       else setOutcome({ kind: "error", message: FAILED });
     });
 
-  // A record response is always shown: the payment really was recorded.
+  // A recorded or replayed payment is always shown: it really happened.
+  // Field errors are dropped once the form was edited, as they describe old values.
   const requestRecord = (values: FormValues) =>
     run(async (isCurrent) => {
       setPreview(null);
@@ -134,7 +135,7 @@ export function PaymentForm({ items }: { items: DeskItem[] }) {
       } else if (status === 200 && body.replayed) {
         setOutcome({ kind: "replayed", payment: body.payment });
       } else if (body.errors) {
-        applyServerErrors(body.errors);
+        if (isCurrent()) applyServerErrors(body.errors);
       } else {
         setOutcome({ kind: "error", message: FAILED });
       }
