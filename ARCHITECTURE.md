@@ -10,6 +10,13 @@
 
 ## Accessibility checks
 
+## Choices where the brief is open
+
+- **Order of checks when recording:** validate, then replay, then stock. A replay returns the original payment even if the rest of the body differs, as the brief's "original sku and total" implies.
+- **Replay after sell-out:** a known charge id still answers 200 with the original payment, not 409. A retry of a payment that already went through should never fail, and it takes no stock either way.
+- **Preview of a sold-out item:** 400 with `{ sku: "Sold out" }`. The preview section says "a failure answers HTTP 400"; 409 is stated only for record.
+- **Body that is not a JSON object:** treated as an empty form, so it answers 400 with every required field listed.
+
 ## Project setup
 
 I scaffolded the app with `create-next-app` (Next.js 16, App Router, TypeScript, Tailwind, `src/` folder) and use pnpm. Node 24 is pinned in `.nvmrc` and `engines`. `.gitattributes` forces LF line endings because I work on Windows.

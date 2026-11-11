@@ -4,6 +4,15 @@
 
 Take-home project. Requirements live in `BRIEF.md`; read it before changing behaviour.
 
+## Following the brief
+
+`BRIEF.md` is the spec and is followed literally.
+
+- Do not add rules, normalisation or limits it does not state. Example: it trims the email but not the charge id, so the charge id is not trimmed.
+- Copy every user-facing string, label, error message, status code and JSON shape exactly.
+- Where the brief is silent, pick the simplest behaviour consistent with it, and record the choice in `ARCHITECTURE.md` so it can be defended.
+- If two of its rules conflict, flag it to the user rather than silently choosing.
+
 ## Next.js docs
 
 This project uses Next.js 16, which differs from older versions. Before writing code that uses a Next.js API, read the matching guide in `node_modules/next/dist/docs/` (`01-app/` is the App Router). This matters most for caching (`use cache`, `cacheTag`, `revalidateTag`, `updateTag`), `searchParams`, `generateMetadata` and `notFound`.

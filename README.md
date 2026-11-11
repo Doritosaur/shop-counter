@@ -31,7 +31,7 @@ Caching behaviour only applies to a production build, so check it with `pnpm bui
 
 ## Where things are
 
-- `validatePayment`: _TODO_
+- `validatePayment`: `src/lib/payments/validate-payment.ts`
 
 ## Time spent
 
