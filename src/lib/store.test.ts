@@ -45,8 +45,8 @@ describe("store", () => {
     expect(findProduct("chair")).toBeUndefined();
   });
 
-  it("shares one store through globalThis", () => {
-    expect(getStore()).toBe(getStore());
+  it("keeps the store on globalThis, so every bundle shares it", () => {
+    expect((globalThis as { __shopStore?: unknown }).__shopStore).toBe(getStore());
   });
 
   it("counts catalogue reads", () => {

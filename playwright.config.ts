@@ -13,7 +13,9 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
+  // No retries: tests change the shared store, so a retry starts from a
+  // different state and cannot pass.
+  retries: 0,
   reporter: process.env.CI ? "github" : "list",
   use: {
     baseURL,
