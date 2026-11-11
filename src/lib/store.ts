@@ -11,14 +11,44 @@ export type Payment = {
   totalCents: number;
 };
 
+export type OrderLine = {
+  sku: string;
+  name: string;
+  unitPriceCents: number;
+  qty: number;
+};
+
+/** Frozen when stored: the amount charged can never change. */
+export type CheckoutAttempt = Readonly<{
+  attemptId: string;
+  lines: readonly Readonly<OrderLine>[];
+  amountCents: number;
+}>;
+
+export type Order = Readonly<{
+  orderId: string;
+  attemptId: string;
+  lines: readonly Readonly<OrderLine>[];
+  amountCents: number;
+}>;
+
 export type Store = {
   products: Product[];
   catalogReads: number;
   payments: Payment[];
+  attempts: Map<string, CheckoutAttempt>;
+  /** Keyed by attempt id, so each attempt has at most one order. */
+  orders: Map<string, Order>;
 };
 
 function createStore(): Store {
-  return { products: SEED_PRODUCTS.map(cloneProduct), catalogReads: 0, payments: [] };
+  return {
+    products: SEED_PRODUCTS.map(cloneProduct),
+    catalogReads: 0,
+    payments: [],
+    attempts: new Map(),
+    orders: new Map(),
+  };
 }
 
 // On globalThis so pages and route handlers share one copy even if Next.js
