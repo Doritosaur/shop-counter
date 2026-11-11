@@ -9,3 +9,12 @@
 ## Running on several serverless instances
 
 ## Accessibility checks
+
+## Project setup
+
+I scaffolded the app with `create-next-app` (Next.js 16, App Router, TypeScript, Tailwind, `src/` folder) and use pnpm. Node 24 is pinned in `.nvmrc` and `engines`. `.gitattributes` forces LF line endings because I work on Windows.
+
+- **Unit and component tests:** Vitest with React Testing Library in jsdom. `pnpm test` runs once and exits, so a reviewer can run it without a watcher.
+- **End-to-end tests:** Playwright on Chromium. `pnpm test:e2e` runs `next build` and `next start` on port 3100 and never reuses a running server. Caching only behaves for real in a production build, and a fresh server means the in-memory store starts clean on every run. `@axe-core/playwright` is installed for the accessibility scan.
+- **Commit gates (lefthook):** `pre-commit` runs lint, typecheck and unit tests. `commit-msg` runs commitlint with Conventional Commits, a 72-character header and a custom rule that rejects AI attribution trailers. The commit history is part of the submission, so I wanted every commit to be small, readable and passing. `pnpm install` installs the hooks through the `prepare` script.
+- **AI assistant guidance:** `CLAUDE.md` holds the project rules: pnpm only, the commit format, and what "done" means before a commit. It imports `AGENTS.md`, the file Next.js generates telling assistants to read the bundled Next 16 docs instead of relying on older APIs. Caching is where that matters most.
