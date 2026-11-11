@@ -19,7 +19,20 @@ export default defineConfig({
     baseURL,
     trace: "retain-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    {
+      name: "chromium",
+      testIgnore: /(a11y|keyboard)\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    // Runs after the functional specs, which expect the store as seeded.
+    {
+      name: "a11y",
+      testMatch: /(a11y|keyboard)\.spec\.ts/,
+      dependencies: ["chromium"],
+      use: { ...devices["Desktop Chrome"] },
+    },
+  ],
   webServer: {
     command: `pnpm build && pnpm start --port ${PORT}`,
     url: baseURL,
