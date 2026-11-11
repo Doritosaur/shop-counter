@@ -2,33 +2,88 @@
 
 ## Server and client split per route
 
+The server renders the data and HTML. The client gets only what needs interaction or browser state.
+
+| Route | Server | Client |
+| --- | --- | --- |
+| `/shop` | Heading prerendered; results per request in `<Suspense>` | `ShopFilters`: Search and Sort (plain GET form without JS) |
+| `/shop/<sku>` | Everything | Nothing |
+| `/desk` | Shell; Payment queue per request | `PaymentForm`: runs `validatePayment` for instant errors, and the server runs it again |
+| `/checkout` | Prices from `getCatalog()`, prerendered | `CheckoutCart`: the cart is browser state, and Cart total updates immediately |
+
+Unknown skus get a 404 from `src/proxy.ts`, because with Cache Components the shell streams with a 200 before `notFound()` runs.
+
 ## Caching the shop pages
+
+I cache the data, not the page. `getCatalog()` is `'use cache'` with `cacheTag('catalog')` and `cacheLife('max')`, and it counts reads inside the cached body.
+
+Search and sort read `searchParams`, so the results are dynamic. They filter and sort the cached list in memory, so a new search never runs `getCatalog()` again. Partial prerendering serves the rest of the page static.
+
+A new payment (201) calls `revalidateTag('catalog', { expire: 0 })`. With `'max'`, the next request would get stale stock while it refreshes. `updateTag` only works in Server Actions.
+
+`/shop/<sku>` reads at request time in both `generateMetadata` and the page. A build-time read in metadata came back stale after a payment, and `revalidatePath` caused a 500. The cost of this fix is that `<title>` streams into the body.
+
+To verify, I used `/api/debug/reads` on `next build` plus `next start`. Repeat requests, searches and sorts leave the counter flat. After a payment, `/shop` and `/shop/lamp` show the new stock.
 
 ## Why the charge is the server snapshot
 
+The client can send any `unitPriceCents`, and the cart stays editable after Pay. So `begin` reads only sku and qty, prices each line from the store, and freezes the attempt. `complete` reads only `attemptId` and builds the order from that snapshot. The customer pays what they saw at Pay. A retry returns the same order and can't charge twice.
+
 ## Running on several serverless instances
+
+All state is in-memory per instance: stock, payments, attempts, orders, the read counter and the `'use cache'` entries. A cold start resets it.
+
+- Stock and the queue depend on which instance answers.
+- The same charge id can be recorded on two instances, so stock goes down twice.
+- `complete` can reach an instance without the attempt and get a 404.
+- A tag invalidation on one instance doesn't refresh another's cache.
+
+Seen on the deployed URL: _TODO._
+
+Instead, I'd use Postgres with an atomic decrement (`WHERE remaining > 0`), a unique `externalChargeId`, and attempts and orders as rows. A shared cache handler would let invalidation reach every instance.
 
 ## Accessibility checks
 
+- One `h1` per page, a skip link, a labelled `nav` and `main`.
+- Every control has a `<label>`. Errors use `aria-invalid` and `aria-describedby`, and focus moves to the rejected field.
+- Regions are labelled by their headings. Outcomes and the cart-changed message are `role="status"`.
+- Pending buttons use `aria-disabled`, so focus isn't lost. At checkout, focus moves on when a button disappears, and to the new heading after Pay or Complete.
+- Tests find elements by role and accessible name.
+
+Checked automatically in `pnpm test:e2e`:
+
+- **axe** (`@axe-core/playwright`, WCAG 2.2 AA plus best-practice), in light and dark schemes, on:
+  - every page and the 404
+  - the desk with errors, a preview and a filled queue
+  - checkout with the empty-cart message, the changed-cart message and a placed order
+- **Keyboard only:**
+  - The skip link comes first.
+  - Search, sort, the desk form and the whole checkout work with Tab, Enter and the arrow keys.
+  - Focus never drops to the page, and focused controls show a ring.
+- **Reflow at 320px** (WCAG 1.4.10): no page scrolls sideways. This caught the payment queue table overflowing, which I fixed by letting long emails and charge ids wrap.
+
+Not checked: a real screen reader, and 200% text zoom.
+
 ## Choices where the brief is open
 
-- **Order of checks when recording:** validate, then replay, then stock. A replay returns the original payment even if the rest of the body differs, as the brief's "original sku and total" implies.
-- **Replay after sell-out:** a known charge id still answers 200 with the original payment, not 409. A retry of a payment that already went through should never fail, and it takes no stock either way.
-- **Preview of a sold-out item:** 400 with `{ sku: "Sold out" }`. The preview section says "a failure answers HTTP 400"; 409 is stated only for record.
-- **Body that is not a JSON object:** treated as an empty form, so it answers 400 with every required field listed.
-- **Desk items at checkout:** `lamp` and `stool` count as unknown skus for `begin`, because checkout sells only Field notebook, Gel pen and Slip case. Otherwise checkout could sell stock-limited items without taking them off stock.
-- **Quantity at checkout:** anything other than a whole number of 1 or more, including `1.5` or `"2"`, is `invalid_cart`.
-- **Status codes the brief leaves out:** `begin` and `complete` answer 200. An unknown or missing `attemptId` answers 404 `{ "error": "unknown_attempt" }`.
-- **Duplicate skus in `begin`:** kept as separate lines. The cart page never sends them.
-- **Decrease at quantity 1:** removes the line, the same as Remove. Focus moves to that row's Add button.
-- **Pay pressed again:** starts a new attempt from the live cart, which replaces the one shown.
-- **After Order placed:** the cart is cleared and Payment in progress is replaced by the order.
+- **Payments:**
+  - Checks run in this order: validate, then replay, then stock.
+  - A known charge id replays the original payment, even after sell-out.
+  - Previewing a sold-out item answers 400 `{ sku: "Sold out" }`.
+  - A body that isn't a JSON object counts as an empty form.
+- **Checkout API:**
+  - `lamp` and `stool` are `invalid_cart`, since checkout sells only the other three.
+  - A qty that isn't a whole number ≥ 1 is `invalid_cart`.
+  - Both routes answer 200. An unknown `attemptId` answers 404 `{ "error": "unknown_attempt" }`.
+- **Checkout UI:**
+  - Decrease at 1 removes the line.
+  - Pay again starts a new attempt.
+  - Order placed clears the cart.
 
 ## Project setup
 
-I scaffolded the app with `create-next-app` (Next.js 16, App Router, TypeScript, Tailwind, `src/` folder) and use pnpm. Node 24 is pinned in `.nvmrc` and `engines`. `.gitattributes` forces LF line endings because I work on Windows.
-
-- **Unit and component tests:** Vitest with React Testing Library in jsdom. `pnpm test` runs once and exits, so a reviewer can run it without a watcher.
-- **End-to-end tests:** Playwright on Chromium. `pnpm test:e2e` runs `next build` and `next start` on port 3100 and never reuses a running server. Caching only behaves for real in a production build, and a fresh server means the in-memory store starts clean on every run. `@axe-core/playwright` is installed for the accessibility scan.
-- **Commit gates (lefthook):** `pre-commit` runs lint, typecheck and unit tests. `commit-msg` runs commitlint with Conventional Commits, a 72-character header and a custom rule that rejects AI attribution trailers. The commit history is part of the submission, so I wanted every commit to be small, readable and passing. `pnpm install` installs the hooks through the `prepare` script.
-- **AI assistant guidance:** `CLAUDE.md` holds the project rules: pnpm only, the commit format, and what "done" means before a commit. It imports `AGENTS.md`, the file Next.js generates telling assistants to read the bundled Next 16 docs instead of relying on older APIs. Caching is where that matters most.
+- Scaffolded with `create-next-app`, using pnpm and Node 24 (`.nvmrc`). LF endings are forced via `.gitattributes`.
+- Vitest and RTL for unit tests.
+- Playwright runs against `next build` plus `next start` on a fresh server, because caching only behaves for real in production.
+- lefthook runs lint, typecheck and tests before each commit, and commitlint checks Conventional Commits and rejects AI attribution trailers.
+- `CLAUDE.md` holds the project rules and imports Next's `AGENTS.md`, which points assistants at the bundled Next 16 docs.
