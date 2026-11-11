@@ -6,12 +6,14 @@ The server renders the data and HTML. The client gets only what needs interactio
 
 | Route | Server | Client |
 | --- | --- | --- |
-| `/shop` | Heading prerendered; results per request in `<Suspense>` | `ShopFilters`: Search and Sort (plain GET form without JS) |
+| `/shop` | Heading prerendered; results per request in `<Suspense>` | `ShopFilters`: Search and Sort, kept in the URL |
 | `/shop/<sku>` | Everything | Nothing |
 | `/desk` | Shell; Payment queue per request | `PaymentForm`: runs `validatePayment` for instant errors, and the server runs it again |
 | `/checkout` | Prices from `getCatalog()`, prerendered | `CheckoutCart`: the cart is browser state, and Cart total updates immediately |
 
 Unknown skus get a 404 from `src/proxy.ts`, because with Cache Components the shell streams with a 200 before `notFound()` runs.
+
+The pages need JavaScript. Content inside `<Suspense>` streams in and is revealed by React's inline script, so without JavaScript `/shop` shows only "Loading items…".
 
 ## Caching the shop pages
 
@@ -75,6 +77,7 @@ Not checked: a real screen reader, and 200% text zoom.
   - `lamp` and `stool` are `invalid_cart`, since checkout sells only the other three.
   - A qty that isn't a whole number ≥ 1 is `invalid_cart`.
   - Both routes answer 200. An unknown `attemptId` answers 404 `{ "error": "unknown_attempt" }`.
+  - A repeated sku stays as separate lines. The page never sends one.
 - **Checkout UI:**
   - Decrease at 1 removes the line.
   - Pay again starts a new attempt.
