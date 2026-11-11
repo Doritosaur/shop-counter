@@ -16,6 +16,13 @@
 - **Replay after sell-out:** a known charge id still answers 200 with the original payment, not 409. A retry of a payment that already went through should never fail, and it takes no stock either way.
 - **Preview of a sold-out item:** 400 with `{ sku: "Sold out" }`. The preview section says "a failure answers HTTP 400"; 409 is stated only for record.
 - **Body that is not a JSON object:** treated as an empty form, so it answers 400 with every required field listed.
+- **Desk items at checkout:** `lamp` and `stool` count as unknown skus for `begin`, because checkout sells only Field notebook, Gel pen and Slip case. Otherwise checkout could sell stock-limited items without taking them off stock.
+- **Quantity at checkout:** anything other than a whole number of 1 or more, including `1.5` or `"2"`, is `invalid_cart`.
+- **Status codes the brief leaves out:** `begin` and `complete` answer 200. An unknown or missing `attemptId` answers 404 `{ "error": "unknown_attempt" }`.
+- **Duplicate skus in `begin`:** kept as separate lines. The cart page never sends them.
+- **Decrease at quantity 1:** removes the line, the same as Remove. Focus moves to that row's Add button.
+- **Pay pressed again:** starts a new attempt from the live cart, which replaces the one shown.
+- **After Order placed:** the cart is cleared and Payment in progress is replaced by the order.
 
 ## Project setup
 
