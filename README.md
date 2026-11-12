@@ -33,6 +33,12 @@ Caching behaviour only applies to a production build, so check it with `pnpm bui
 
 - `validatePayment`: `src/lib/payments/validate-payment.ts`
 
+## Project setup
+
+- LF line endings are forced via `.gitattributes`.
+- lefthook runs lint, typecheck and tests before each commit, and commitlint checks Conventional Commits and rejects AI attribution trailers.
+- `CLAUDE.md` holds the project rules and imports Next's `AGENTS.md`, which points assistants at the bundled Next 16 docs.
+
 ## Time spent
 
 About 10 hours.

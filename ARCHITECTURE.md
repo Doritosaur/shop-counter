@@ -11,6 +11,8 @@ The server renders the data and HTML. The client gets only what needs interactio
 | `/desk` | Shell; Payment queue per request | `PaymentForm`: runs `validatePayment` for instant errors, and the server runs it again |
 | `/checkout` | Prices from `getCatalog()`, prerendered | `CheckoutCart`: the cart is browser state, and Cart total updates immediately |
 
+On every page the layout is server-rendered. Only `NavLinks` is client, because it reads the pathname to mark the current section. `/` and the 404 are fully static.
+
 Unknown skus get a 404 from `src/proxy.ts`, because with Cache Components the shell streams with a 200 before `notFound()` runs.
 
 The pages need JavaScript. Content inside `<Suspense>` streams in and is revealed by React's inline script, so without JavaScript `/shop` shows only "Loading items…".
@@ -54,7 +56,7 @@ Instead, I'd use Postgres with an atomic decrement (`WHERE remaining > 0`), a un
 
 Checked automatically in `pnpm test:e2e`:
 
-- **axe** (`@axe-core/playwright`, WCAG 2.2 AA plus best-practice), in light and dark schemes, on:
+- **axe** (`@axe-core/playwright`, WCAG 2.2 AA plus best-practice), on:
   - every page and the 404
   - the desk with errors, a preview and a filled queue
   - checkout with the empty-cart message, the changed-cart message and a placed order
@@ -82,11 +84,3 @@ Not checked: a real screen reader, and 200% text zoom.
   - Decrease at 1 removes the line.
   - Pay again starts a new attempt.
   - Order placed clears the cart.
-
-## Project setup
-
-- Scaffolded with `create-next-app`, using pnpm and Node 24 (`.nvmrc`). LF endings are forced via `.gitattributes`.
-- Vitest and RTL for unit tests.
-- Playwright runs against `next build` plus `next start` on a fresh server, because caching only behaves for real in production.
-- lefthook runs lint, typecheck and tests before each commit, and commitlint checks Conventional Commits and rejects AI attribution trailers.
-- `CLAUDE.md` holds the project rules and imports Next's `AGENTS.md`, which points assistants at the bundled Next 16 docs.
