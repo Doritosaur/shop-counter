@@ -7,6 +7,7 @@ import { getCatalog } from "@/lib/catalog";
 import { formatUsd } from "@/lib/money";
 import { SEED_PRODUCTS } from "@/lib/products";
 import { stockLabel } from "@/lib/shop-query";
+import * as ui from "@/app/ui";
 
 // Unknown skus never reach this page: src/proxy.ts answers them with a 404.
 export function generateStaticParams() {
@@ -35,13 +36,13 @@ export async function generateMetadata({ params }: PageProps<"/shop/[sku]">): Pr
 
 export default function ProductPage({ params }: PageProps<"/shop/[sku]">) {
   return (
-    <article>
+    <article className="max-w-lg">
       <p>
-        <Link href="/shop" className="underline">
-          Back to the shop
+        <Link href="/shop" className={ui.link}>
+          <span aria-hidden="true">← </span>Back to the shop
         </Link>
       </p>
-      <Suspense fallback={<p className="mt-4">Loading item…</p>}>
+      <Suspense fallback={<p className={`mt-4 ${ui.muted}`}>Loading item…</p>}>
         <ProductDetails params={params} />
       </Suspense>
     </article>
@@ -54,28 +55,34 @@ async function ProductDetails({ params }: Pick<PageProps<"/shop/[sku]">, "params
   const product = await getProduct(sku);
 
   return (
-    <>
-      <h1 className="mt-4 text-2xl font-semibold">{product.name}</h1>
-      <dl className="mt-6 grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2">
-        <dt className="font-medium">Price</dt>
-        <dd>{formatUsd(product.priceCents)}</dd>
-        <dt className="font-medium">Remaining</dt>
-        <dd>{stockLabel(product.remaining)}</dd>
-        <dt className="font-medium">Extras</dt>
-        <dd>
-          {product.extras.length === 0 ? (
-            "None"
-          ) : (
-            <ul>
-              {product.extras.map((extra) => (
-                <li key={extra.code}>
-                  {extra.name} ({formatUsd(extra.priceCents)})
-                </li>
-              ))}
-            </ul>
-          )}
-        </dd>
+    <div className={`${ui.card} mt-4`}>
+      <h1 className={ui.pageTitle}>{product.name}</h1>
+      <dl className={`${ui.detailList} mt-4`}>
+        <div className="flex items-center justify-between gap-4 py-2.5">
+          <dt className="text-slate-600">Price</dt>
+          <dd className={`${ui.price} text-base`}>{formatUsd(product.priceCents)}</dd>
+        </div>
+        <div className="flex items-center justify-between gap-4 py-2.5">
+          <dt className="text-slate-600">Remaining</dt>
+          <dd className={ui.stockBadge(product.remaining)}>{stockLabel(product.remaining)}</dd>
+        </div>
+        <div className="flex items-start justify-between gap-4 py-2.5">
+          <dt className="text-slate-600">Extras</dt>
+          <dd className="text-right">
+            {product.extras.length === 0 ? (
+              "None"
+            ) : (
+              <ul>
+                {product.extras.map((extra) => (
+                  <li key={extra.code}>
+                    {extra.name} ({formatUsd(extra.priceCents)})
+                  </li>
+                ))}
+              </ul>
+            )}
+          </dd>
+        </div>
       </dl>
-    </>
+    </div>
   );
 }

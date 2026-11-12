@@ -1,25 +1,21 @@
 import Link from "next/link";
+import { SECTIONS } from "@/app/sections";
+import * as ui from "@/app/ui";
 
 export default function Home() {
   return (
     <>
-      <h1 className="text-2xl font-semibold">Shop counter</h1>
-      <ul className="mt-6 list-disc space-y-2 pl-6">
-        <li>
-          <Link href="/shop" className="underline">
-            Shop
-          </Link>: browse the catalogue
-        </li>
-        <li>
-          <Link href="/desk" className="underline">
-            Desk
-          </Link>: record a payment
-        </li>
-        <li>
-          <Link href="/checkout" className="underline">
-            Checkout
-          </Link>: buy notebooks, pens and cases
-        </li>
+      <h1 className={ui.pageTitle}>Shop counter</h1>
+      <p className={ui.pageLead}>A small shop with a catalogue, a staff desk and a checkout.</p>
+      <ul className={`${ui.list} mt-6`}>
+        {SECTIONS.map((section) => (
+          <li key={section.href} className={ui.linkRow}>
+            <Link href={section.href} className={`font-medium text-blue-700 ${ui.stretchedLink}`}>
+              {section.label}
+            </Link>
+            <p className={ui.muted}>{section.text}</p>
+          </li>
+        ))}
       </ul>
     </>
   );

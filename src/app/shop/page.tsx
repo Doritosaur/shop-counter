@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { getCatalog } from "@/lib/catalog";
 import { formatUsd } from "@/lib/money";
 import { applyShopQuery, parseShopQuery, stockLabel } from "@/lib/shop-query";
+import * as ui from "@/app/ui";
 import { ShopFilters } from "./shop-filters";
 
 export const metadata: Metadata = {
@@ -16,8 +17,9 @@ export const metadata: Metadata = {
 export default function ShopPage({ searchParams }: PageProps<"/shop">) {
   return (
     <>
-      <h1 className="text-2xl font-semibold">Shop</h1>
-      <Suspense fallback={<p className="mt-6">Loading items…</p>}>
+      <h1 className={ui.pageTitle}>Shop</h1>
+      <p className={ui.pageLead}>Every item in the catalogue, with its price and stock.</p>
+      <Suspense fallback={<p className={`mt-6 ${ui.muted}`}>Loading items…</p>}>
         <ShopResults searchParams={searchParams} />
       </Suspense>
     </>
@@ -30,25 +32,28 @@ async function ShopResults({ searchParams }: Pick<PageProps<"/shop">, "searchPar
   const products = applyShopQuery(await getCatalog(), query);
 
   return (
-    <div className="mt-6 space-y-6">
+    <div className="mt-6 space-y-3">
       <ShopFilters q={query.q} sort={query.sort} sortInUrl={params.sort !== undefined} />
 
-      <p role="status" className="sr-only">
+      <p role="status" className={ui.caption}>
         {products.length === 1 ? "1 item" : `${products.length} items`}
       </p>
 
       {products.length === 0 ? (
-        <p>No items match</p>
+        <p className={`${ui.card} text-center ${ui.muted}`}>No items match</p>
       ) : (
-        <ul aria-label="Items" className="divide-y divide-zinc-300 dark:divide-zinc-700">
+        <ul aria-label="Items" className={ui.list}>
           {products.map((product) => (
-            <li key={product.sku} className="flex flex-wrap items-baseline justify-between gap-2 py-3">
-              <Link href={`/shop/${product.sku}`} className="font-medium underline-offset-4 hover:underline">
+            <li
+              key={product.sku}
+              className={`${ui.linkRow} flex flex-wrap items-center justify-between gap-x-4 gap-y-1`}
+            >
+              <Link href={`/shop/${product.sku}`} className={`font-medium text-blue-950 ${ui.stretchedLink}`}>
                 {product.name}
               </Link>
-              <span className="flex gap-4">
-                <span>{formatUsd(product.priceCents)}</span>
-                <span>{stockLabel(product.remaining)}</span>
+              <span className="flex items-center gap-3">
+                <span className={ui.price}>{formatUsd(product.priceCents)}</span>
+                <span className={ui.stockBadge(product.remaining)}>{stockLabel(product.remaining)}</span>
               </span>
             </li>
           ))}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getCatalog } from "@/lib/catalog";
 import type { CheckoutItem } from "@/lib/checkout/cart";
 import { CHECKOUT_SKUS } from "@/lib/products";
+import * as ui from "@/app/ui";
 import { CheckoutCart } from "./checkout-cart";
 
 export const metadata: Metadata = {
@@ -20,7 +21,8 @@ export default async function CheckoutPage() {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">Checkout</h1>
+      <h1 className={ui.pageTitle}>Checkout</h1>
+      <p className={ui.pageLead}>Add items to your cart. You are charged the cart as it was when you pressed Pay.</p>
       <div className="mt-6">
         <CheckoutCart items={items} />
       </div>

@@ -12,6 +12,7 @@ import {
 } from "@/lib/payments/validate-payment";
 import { seedProduct } from "@/lib/products";
 import type { Payment } from "@/lib/store";
+import * as ui from "@/app/ui";
 
 export type DeskItem = { sku: string; name: string };
 
@@ -172,16 +173,14 @@ export function PaymentForm({ items }: { items: DeskItem[] }) {
     const error = errors[field]?.message;
     if (!error) return null;
     return (
-      <p id={`${ids[field]}-error`} className="text-sm text-red-700 dark:text-red-400">
+      <p id={`${ids[field]}-error`} className={ui.fieldError}>
         {error}
       </p>
     );
   }
 
-  const inputClass = "rounded border border-zinc-400 px-3 py-2 aria-[invalid=true]:border-red-700";
-
   return (
-    <div className="space-y-6">
+    <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
       <form
         noValidate
         onSubmit={onPreview}
@@ -190,16 +189,17 @@ export function PaymentForm({ items }: { items: DeskItem[] }) {
           setPreview(null);
           setOutcome(null);
         }}
-        className="grid max-w-md gap-4"
+        className={`${ui.card} grid gap-3 sm:grid-cols-2`}
       >
+        <h2 className={`${ui.cardTitle} sm:col-span-2`}>Record a payment</h2>
         <div className="flex flex-col gap-1">
-          <label htmlFor={ids.email} className="font-medium">
+          <label htmlFor={ids.email} className={ui.label}>
             Email
           </label>
           <input
             type="email"
             autoComplete="off"
-            className={inputClass}
+            className={ui.input}
             {...fieldProps("email")}
             {...register("email")}
           />
@@ -207,11 +207,11 @@ export function PaymentForm({ items }: { items: DeskItem[] }) {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor={ids.sku} className="font-medium">
+          <label htmlFor={ids.sku} className={ui.label}>
             Item
           </label>
           <select
-            className={inputClass}
+            className={ui.input}
             {...fieldProps("sku")}
             {...register("sku", { onChange: (event) => onItemChange(event.target.value) })}
           >
@@ -226,10 +226,10 @@ export function PaymentForm({ items }: { items: DeskItem[] }) {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor={ids.extraCode} className="font-medium">
+          <label htmlFor={ids.extraCode} className={ui.label}>
             Extra
           </label>
-          <select className={inputClass} {...fieldProps("extraCode")} {...register("extraCode")}>
+          <select className={ui.input} {...fieldProps("extraCode")} {...register("extraCode")}>
             <option value="">None</option>
             <option value="cushion">Cushion</option>
           </select>
@@ -237,78 +237,80 @@ export function PaymentForm({ items }: { items: DeskItem[] }) {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor={ids.externalChargeId} className="font-medium">
+          <label htmlFor={ids.externalChargeId} className={ui.label}>
             Charge id
           </label>
           <input
             type="text"
             autoComplete="off"
             spellCheck={false}
-            className={inputClass}
+            className={ui.input}
             {...fieldProps("externalChargeId")}
             {...register("externalChargeId")}
           />
           {fieldError("externalChargeId")}
         </div>
 
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            aria-disabled={isSubmitting || undefined}
-            className="rounded border border-zinc-500 px-4 py-2 font-medium aria-disabled:opacity-50"
-          >
+        <div className="flex flex-wrap gap-2 pt-1 sm:col-span-2">
+          <button type="submit" aria-disabled={isSubmitting || undefined} className={ui.button}>
             Preview
           </button>
           <button
             type="button"
             aria-disabled={isSubmitting || undefined}
             onClick={onRecord}
-            className="rounded bg-zinc-900 px-4 py-2 font-medium text-white aria-disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
+            className={ui.buttonPrimary}
           >
             Record payment
           </button>
         </div>
       </form>
 
-      <div role="status" aria-live="polite">
-        {outcome?.kind === "recorded" && (
-          <p>
-            Payment recorded: {outcome.payment.itemName} for {outcome.payment.email},{" "}
-            {formatUsd(outcome.payment.totalCents)}.
-          </p>
-        )}
-        {outcome?.kind === "replayed" && (
-          <p>
-            Charge {outcome.payment.externalChargeId} was already recorded:{" "}
-            {outcome.payment.itemName} for {outcome.payment.email},{" "}
-            {formatUsd(outcome.payment.totalCents)}. Nothing was taken off stock.
-          </p>
-        )}
-        {outcome?.kind === "error" && <p>{outcome.message}</p>}
-      </div>
+      <div>
+        {/* Always rendered, so screen readers announce the outcome when it appears. */}
+        <div role="status" aria-live="polite">
+          {outcome?.kind === "recorded" && (
+            <p className={`${ui.alertSuccess} mb-3`}>
+              Payment recorded: {outcome.payment.itemName} for {outcome.payment.email},{" "}
+              {formatUsd(outcome.payment.totalCents)}.
+            </p>
+          )}
+          {outcome?.kind === "replayed" && (
+            <p className={`${ui.alertInfo} mb-3`}>
+              Charge {outcome.payment.externalChargeId} was already recorded:{" "}
+              {outcome.payment.itemName} for {outcome.payment.email},{" "}
+              {formatUsd(outcome.payment.totalCents)}. Nothing was taken off stock.
+            </p>
+          )}
+          {outcome?.kind === "error" && <p className={`${ui.alertError} mb-3`}>{outcome.message}</p>}
+        </div>
 
-      {preview && (
-        <section
-          aria-labelledby={ids.preview}
-          className="max-w-md rounded border border-zinc-300 p-4 dark:border-zinc-700"
-        >
-          <h2 id={ids.preview} className="text-lg font-semibold">
-            Payment preview
-          </h2>
-          <dl className="mt-3 grid grid-cols-[max-content_1fr] gap-x-6 gap-y-1">
-            <dt className="font-medium">Email</dt>
-            <dd>{preview.email}</dd>
-            <dt className="font-medium">Item</dt>
-            <dd>{preview.itemName}</dd>
-            <dt className="font-medium">Extra</dt>
-            <dd>{preview.extraName ?? "None"}</dd>
-            <dt className="font-medium">Total</dt>
-            <dd>{formatUsd(preview.totalCents)}</dd>
-            <dt className="font-medium">Remaining after this payment</dt>
-            <dd>{preview.remainingAfter ?? "Not stock-limited"}</dd>
-          </dl>
-        </section>
-      )}
+        {preview ? (
+          <section aria-labelledby={ids.preview} className={ui.card}>
+            <h2 id={ids.preview} className={ui.cardTitle}>
+              Payment preview
+            </h2>
+            <dl className={`${ui.detailList} mt-3`}>
+              {[
+                ["Email", preview.email],
+                ["Item", preview.itemName],
+                ["Extra", preview.extraName ?? "None"],
+                ["Total", formatUsd(preview.totalCents)],
+                ["Remaining after this payment", preview.remainingAfter ?? "Not stock-limited"],
+              ].map(([term, value]) => (
+                <div key={term} className="flex justify-between gap-4 py-2">
+                  <dt className="text-slate-600">{term}</dt>
+                  <dd className="text-right font-medium text-blue-950 wrap-anywhere">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ) : (
+          <p className={`rounded-xl border border-dashed border-slate-300 p-5 ${ui.muted}`}>
+            Preview a payment to check its total and the stock left before recording it.
+          </p>
+        )}
+      </div>
     </div>
   );
 }

@@ -52,52 +52,52 @@ test.describe("reflow at 320px", () => {
   });
 });
 
-for (const colorScheme of ["light", "dark"] as const) {
-  test.describe(`axe, ${colorScheme} scheme`, () => {
-    test.use({ colorScheme });
+// One light theme. Scanned with a dark OS setting, so contrast is checked as
+// dark-mode users see it.
+test.describe("axe", () => {
+  test.use({ colorScheme: "dark" });
 
-    for (const url of ["/", "/shop", "/shop?q=zzz", "/shop/stool", "/shop/nope", "/desk", "/checkout"]) {
-      test(`${url} has no violations`, async ({ page }) => {
-        await open(page, url);
-        await expectNoViolations(page);
-      });
-    }
-
-    test("desk with errors, a preview and a recorded payment", async ({ page }) => {
-      await open(page, "/desk");
-      await page.getByRole("button", { name: "Preview" }).click();
-      await expect(page.getByText("Enter a valid email")).toBeVisible();
-      await expectNoViolations(page);
-
-      await page.getByLabel("Email").fill("ada@example.com");
-      await page.getByLabel("Item").selectOption({ label: "Maple lamp" });
-      await page.getByLabel("Charge id").fill(CHARGE_ID);
-      await page.getByRole("button", { name: "Preview" }).click();
-      await expect(page.getByRole("region", { name: "Payment preview" })).toBeVisible();
-      await expectNoViolations(page);
-
-      await page.getByRole("button", { name: "Record payment" }).click();
-      // "Payment recorded" the first time, "was already recorded" after.
-      await expect(page.getByRole("status").filter({ hasText: "recorded" })).toBeVisible();
-      await expect(page.getByRole("table")).toBeVisible();
+  for (const url of ["/", "/shop", "/shop?q=zzz", "/shop/stool", "/shop/nope", "/desk", "/checkout"]) {
+    test(`${url} has no violations`, async ({ page }) => {
+      await open(page, url);
       await expectNoViolations(page);
     });
+  }
 
-    test("checkout with a changed cart and a placed order", async ({ page }) => {
-      await open(page, "/checkout");
-      await page.getByRole("button", { name: "Pay", exact: true }).click();
-      await expect(page.getByText("Add an item before paying")).toBeVisible();
-      await expectNoViolations(page);
+  test("desk with errors, a preview and a recorded payment", async ({ page }) => {
+    await open(page, "/desk");
+    await page.getByRole("button", { name: "Preview" }).click();
+    await expect(page.getByText("Enter a valid email")).toBeVisible();
+    await expectNoViolations(page);
 
-      await row(page, "Field notebook").getByRole("button", { name: "Add" }).click();
-      await page.getByRole("button", { name: "Pay", exact: true }).click();
-      await row(page, "Gel pen").getByRole("button", { name: "Add" }).click();
-      await expect(page.getByText(/Your cart changed/)).toBeVisible();
-      await expectNoViolations(page);
+    await page.getByLabel("Email").fill("ada@example.com");
+    await page.getByLabel("Item").selectOption({ label: "Maple lamp" });
+    await page.getByLabel("Charge id").fill(CHARGE_ID);
+    await page.getByRole("button", { name: "Preview" }).click();
+    await expect(page.getByRole("region", { name: "Payment preview" })).toBeVisible();
+    await expectNoViolations(page);
 
-      await page.getByRole("button", { name: "Complete payment" }).click();
-      await expect(page.getByRole("region", { name: "Order placed" })).toBeVisible();
-      await expectNoViolations(page);
-    });
+    await page.getByRole("button", { name: "Record payment" }).click();
+    // "Payment recorded" the first time, "was already recorded" after.
+    await expect(page.getByRole("status").filter({ hasText: "recorded" })).toBeVisible();
+    await expect(page.getByRole("table")).toBeVisible();
+    await expectNoViolations(page);
   });
-}
+
+  test("checkout with a changed cart and a placed order", async ({ page }) => {
+    await open(page, "/checkout");
+    await page.getByRole("button", { name: "Pay", exact: true }).click();
+    await expect(page.getByText("Add an item before paying")).toBeVisible();
+    await expectNoViolations(page);
+
+    await row(page, "Field notebook").getByRole("button", { name: "Add" }).click();
+    await page.getByRole("button", { name: "Pay", exact: true }).click();
+    await row(page, "Gel pen").getByRole("button", { name: "Add" }).click();
+    await expect(page.getByText(/Your cart changed/)).toBeVisible();
+    await expectNoViolations(page);
+
+    await page.getByRole("button", { name: "Complete payment" }).click();
+    await expect(page.getByRole("region", { name: "Order placed" })).toBeVisible();
+    await expectNoViolations(page);
+  });
+});

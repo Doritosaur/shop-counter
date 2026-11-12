@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { parseSort, shopHref, SORT_OPTIONS, type SortKey } from "@/lib/shop-query";
+import * as ui from "@/app/ui";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -99,10 +100,10 @@ export function ShopFilters({ q, sort, sortInUrl }: Props) {
       action="/shop"
       method="get"
       onSubmit={onSubmit}
-      className="flex flex-wrap items-end gap-4"
+      className="flex flex-wrap items-end gap-3"
     >
-      <div className="flex flex-col gap-1">
-        <label htmlFor={searchId} className="font-medium">
+      <div className="flex min-w-48 flex-1 flex-col gap-1">
+        <label htmlFor={searchId} className={ui.label}>
           Search
         </label>
         <input
@@ -111,11 +112,11 @@ export function ShopFilters({ q, sort, sortInUrl }: Props) {
           type="search"
           value={query}
           onChange={(event) => onSearchChange(event.target.value)}
-          className="rounded border border-zinc-400 px-3 py-2"
+          className={ui.input}
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor={sortId} className="font-medium">
+        <label htmlFor={sortId} className={ui.label}>
           Sort
         </label>
         <select
@@ -123,7 +124,7 @@ export function ShopFilters({ q, sort, sortInUrl }: Props) {
           name="sort"
           value={sortValue}
           onChange={(event) => onSortChange(event.target.value)}
-          className="rounded border border-zinc-400 px-3 py-2"
+          className={ui.input}
         >
           {SORT_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
