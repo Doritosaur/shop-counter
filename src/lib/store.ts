@@ -18,7 +18,6 @@ export type OrderLine = {
   qty: number;
 };
 
-/** Frozen when stored: the amount charged can never change. */
 export type CheckoutAttempt = Readonly<{
   attemptId: string;
   lines: readonly Readonly<OrderLine>[];

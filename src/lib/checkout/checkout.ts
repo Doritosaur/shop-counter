@@ -23,7 +23,6 @@ function freezeLines(lines: OrderLine[]) {
   return Object.freeze(lines.map((line) => Object.freeze(line)));
 }
 
-/** Prices every line from the catalogue and stores the snapshot. */
 export function beginCheckout(input: unknown): BeginResult {
   const cart = CartSchema.safeParse(input);
   if (!cart.success) return { kind: "invalid_cart" };

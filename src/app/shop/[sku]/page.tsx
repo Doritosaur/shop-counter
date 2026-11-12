@@ -20,10 +20,7 @@ async function getProduct(sku: string) {
   return product;
 }
 
-/**
- * Reads at request time. A build-time getCatalog() read here is reused stale
- * on the first request after a payment. Cost: <title> streams into the body.
- */
+// Per request: a build-time read here is served stale after a payment.
 export async function generateMetadata({ params }: PageProps<"/shop/[sku]">): Promise<Metadata> {
   const { sku } = await params;
   await connection();

@@ -3,10 +3,7 @@ import { CATALOG_TAG } from "@/lib/catalog";
 import { readJson } from "@/lib/http";
 import { recordPayment } from "@/lib/payments/payments";
 
-/**
- * `{ expire: 0 }`, not `"max"`: "max" serves stale stock to the next request.
- * `updateTag` would work too, but only in Server Actions.
- */
+// `{ expire: 0 }`, not `"max"`: "max" serves stale stock to the next request.
 export async function POST(request: Request) {
   const result = recordPayment(await readJson(request));
 

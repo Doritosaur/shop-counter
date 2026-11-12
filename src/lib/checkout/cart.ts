@@ -1,13 +1,9 @@
-// No server state, so client components can import it.
-
 export type CheckoutItem = { sku: string; name: string; priceCents: number };
 
-/** Quantity by sku. A sku that is not in the cart has no key. */
 export type Cart = Readonly<Record<string, number>>;
 
 export type CartLine = { sku: string; qty: number };
 
-/** Lines in catalogue order, which is also the order sent to begin. */
 export function cartLines(items: readonly CheckoutItem[], cart: Cart): CartLine[] {
   return items.filter((item) => cart[item.sku]).map((item) => ({ sku: item.sku, qty: cart[item.sku] }));
 }
@@ -21,7 +17,6 @@ export function setQty(cart: Cart, sku: string, qty: number): Cart {
   return Object.fromEntries(Object.entries(cart).filter(([key]) => key !== sku));
 }
 
-/** Same sku and quantity pairs, in any order. */
 export function sameLines(a: readonly CartLine[], b: readonly CartLine[]): boolean {
   const key = (lines: readonly CartLine[]) =>
     lines

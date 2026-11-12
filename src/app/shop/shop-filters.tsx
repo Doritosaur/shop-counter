@@ -10,7 +10,6 @@ const SEARCH_DEBOUNCE_MS = 300;
 type Props = {
   q: string;
   sort: SortKey;
-  /** Typing keeps `?sort=` only if it was already in the URL. */
   sortInUrl: boolean;
 };
 

@@ -12,8 +12,6 @@ export const metadata: Metadata = {
   description: "Browse every item in the shop counter catalogue, with prices and stock.",
 };
 
-// The shell is prerendered. Results read searchParams per request, but
-// getCatalog() is cached, so a new search or sort does not run it again.
 export default function ShopPage({ searchParams }: PageProps<"/shop">) {
   return (
     <>

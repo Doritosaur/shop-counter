@@ -1,5 +1,3 @@
-// No server state, so client components can import it.
-
 export type Extra = {
   code: string;
   name: string;
