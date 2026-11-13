@@ -10,7 +10,9 @@ const KNOWN_SKUS = new Set(SEED_PRODUCTS.map((product) => product.sku));
 export function proxy(request: NextRequest) {
   if (KNOWN_SKUS.has(skuFrom(request.nextUrl.pathname))) return NextResponse.next();
 
-  return NextResponse.rewrite(new URL("/_not-found", request.url));
+  // Not "/_not-found": Vercel serves that prerendered page with a 200.
+  // A leading underscore is a private folder, so this path never matches a route.
+  return NextResponse.rewrite(new URL("/_unknown-sku", request.url));
 }
 
 function skuFrom(pathname: string): string {
